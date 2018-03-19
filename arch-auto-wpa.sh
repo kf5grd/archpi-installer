@@ -28,7 +28,7 @@ mount "${DISK}2" root
 
 cp get_wpa.service root/usr/lib/systemd/system/get_wpa.service
 cp get_wpa root/usr/bin/get_wpa
-chmod +x root/usr/bin/get_wpa.sh
+chmod +x root/usr/bin/get_wpa
 
 ln -s \
     /usr/lib/systemd/system/get_wpa.service \
