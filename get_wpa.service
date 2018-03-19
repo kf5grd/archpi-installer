@@ -1,0 +1,9 @@
+[Unit]
+Description=Auto-setup WPA
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/get_wpa
+
+[Install]
+WantedBy=multi-user.target

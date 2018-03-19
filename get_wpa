@@ -1,0 +1,24 @@
+#!/bin/sh
+wpa_file="/boot/wpa_supplicant.conf"
+wlan0_file="/boot/wlan0.network"
+if [ -f "$wpa_file" ]
+then
+    if [ -f "$wlan0_file" ]
+    then
+        mv "wlan0_file" /etc/systemd/network/wlan0.network
+    else
+        cat << EOF > /etc/systemd/network/wlan0.network
+[Match]
+Name=wlan0
+
+[Network]
+DHCP=yes
+EOF
+    fi
+
+    mv "$wpa_file" /etc/wpa_supplicant/wpa_supplicant-wlan0.conf
+
+    ln -s \
+        /usr/lib/systemd/system/wpa_supplicant@.service \
+	/etc/systemd/system/multi-user.target.wants/wpa_supplicant@wlan0.service
+fi
