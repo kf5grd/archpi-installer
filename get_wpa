@@ -21,9 +21,7 @@ EOF
 }
 
 ENABLE_NETWORKING() {
-    ln -s \
-        /usr/lib/systemd/system/wpa_supplicant@.service \
-	/etc/systemd/system/multi-user.target.wants/wpa_supplicant@wlan0.service
+    systemctl enable --now wpa_supplicant@wlan0.service
 }
 
 if [ -f "$wpa_file" ]; then
