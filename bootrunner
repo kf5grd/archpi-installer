@@ -1,0 +1,41 @@
+#!/bin/bash
+shopt -s nullglob
+
+BOOTSCRIPT_FOLDER="/etc/bootrunner.d"
+RUN_FOLDER="${BOOTSCRIPT_FOLDER}/run"
+DONE_FOLDER="${BOOTSCRIPT_FOLDER}/done"
+BOOTSCRIPT_LOG="${BOOTSCRIPT_FOLDER}/bootrunner.log"
+REQUIRED_PERM="700"
+
+get_file_perm() {
+    # get_file_perm "/path/to/file"
+    stat -c %a "${1}"
+}
+
+run_bootscript() {
+    if [ "$(get_file_perm "${RUN_FOLDER}")" != "${REQUIRED_PERM}" ]; then
+	echo "${RUN_FOLDER}: run folder has insufficient permissions. Need ${REQUIRED_PERM}, have $(get_file_perm "${RUN_FOLDER}")" >> ${BOOTSCRIPT_LOG}
+	exit 1
+    fi
+
+    for FILE in "${RUN_FOLDER}"/*; do
+	echo "=== RUNNING ${FILE} ==="
+	chmod +x "${FILE}"
+	"${FILE}" >> ${BOOTSCRIPT_LOG}
+	echo "=== ${FILE} EXIT: $? ===" >> ${BOOTSCRIPT_LOG}
+	mv "${FILE}" "${DONE_FOLDER}"
+    done
+}
+
+echo "=== bootscript.d $(date) ===" >> ${BOOTSCRIPT_LOG}
+run_bootscript
+if [ -f "${BOOTSCRIPT_FOLDER}"/reboot ]; then
+    echo "reboot requested..." >> ${BOOTSCRIPT_LOG}
+    rm "${BOOTSCRIPT_FOLDER}"/reboot
+    echo "=== bootscript.d done ===" >> ${BOOTSCRIPT_LOG}
+    echo "" >> ${BOOTSCRIPT_LOG}
+    reboot
+else
+    echo "=== bootscript.d done ===" >> ${BOOTSCRIPT_LOG}
+    echo "" >> ${BOOTSCRIPT_LOG}
+fi

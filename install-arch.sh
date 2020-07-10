@@ -56,17 +56,21 @@ setup_loop(){
 
 partition_image(){
     # Partitions the disk image.
-    # As of now, this will create a 100M fat partition, and the rest of the image will be filled with an ext4 partition
+    # ----
+    # As of now, this will create a 100M fat partition, a 10M ext4 partition
+    # for bootrunner scripts, and the rest of the image will be filled with an
+    # ext4 partition
     echo -e "\n\n[o] Creating partitions"
     echo -e "o\nw" | fdisk -W always "${LOOPDEV}" && \
-    echo -e "o\nn\np\n1\n\n+100M\nt\nc\nn\np\n2\n\n\nw" | fdisk -W always "${LOOPDEV}"
+    echo -e "o\nn\np\n1\n\n+100M\nt\nc\nn\np\n2\n\n+10M\nn\np\n3\n\n\nw" | fdisk -W always "${LOOPDEV}"
     catch_error "creating partitions" "$?"
 }
 
 create_fs(){
     echo -e "\n\n[o] Formatting partitions"
     mkfs.vfat "${LOOPDEV}p1" && \
-    mkfs.ext4 "${LOOPDEV}p2"
+    mkfs.ext4 "${LOOPDEV}p2" && \
+    mkfs.ext4 "${LOOPDEV}p3"
     catch_error "creating filesystems" "$?"
 }
 
@@ -75,7 +79,9 @@ mount_fs(){
     mkdir -p boot && \
     mkdir -p root && \
     mount "${LOOPDEV}p1" boot && \
-    mount "${LOOPDEV}p2" root
+    mount "${LOOPDEV}p3" root && \
+    mkdir -p root/etc/bootrunner.d && \
+    mount "${LOOPDEV}p2" root/etc/bootrunner.d
     catch_error "mounting filesystems" "$?"
 }
 
@@ -83,6 +89,10 @@ install_arch(){
     echo -e "\n\n[o] Installing base OS"
     bsdtar -xpf "${ARCHFILE}" -C root && \
     mv root/boot/* boot && \
+    echo -e "# <device>\t<dir>\t<type>\t<options>\t<dump>\t<fsck>" > root/etc/fstab && \
+    echo -e "/dev/mmcblk0p3\t/\text4\tdefaults\t0\t0" >> root/etc/fstab && \
+    echo -e "/dev/mmcblk0p2\t/etc/bootrunner.d\text4\tdefaults\t0\t0" >> root/etc/fstab && \
+    sed -i 's/mmcblk0p2/mmcblk0p3/g' boot/cmdline.txt && \
     sync
     catch_error "installing arch filesystem" "$?"
 }
@@ -90,6 +100,8 @@ install_arch(){
 install_scripts(){
     wpa_file="wpa_supplicant.conf"
     wlan0_file="wlan0.network"
+    bootrunner_folder="bootrunner.d"
+    bootrunner_perm="700"
 
     echo -e "\n\n[o] Installing scripts"
     # Copy wpa file to boot partition if it exists
@@ -106,22 +118,42 @@ install_scripts(){
 	catch_error "copying $wlan0_file to boot partition" "$?"
     fi
 
-    # Copy scripts into place
+    # If bootrunner.d exists, copy contents to /etc/bootrunner.d
+    if [ -d "$bootrunner_folder" ]
+    then
+	cp -r "$bootrunner_folder"/* "root/etc/$bootrunner_folder" && \
+	chmod "$bootrunner_perm" "root/etc/$bootrunner_folder/run"
+	catch_error "copying $bootrunner_folder to boot partition" "$?"
+    fi
+
+    # Copy get_wpa scripts into place
     cp get_wpa.service root/usr/lib/systemd/system/get_wpa.service && \
     cp get_wpa root/usr/bin/get_wpa && \
     chmod +x root/usr/bin/get_wpa
-    catch_error "copying scripts into place" "$?"
+    catch_error "copying get_wpa scripts into place" "$?"
 
-    # Enable service
+    # Copy bootrunner scripts into place
+    cp bootrunner.service root/usr/lib/systemd/system/bootrunner.service && \
+    cp bootrunner root/usr/bin/bootrunner && \
+    chmod +x root/usr/bin/bootrunner
+    catch_error "copying bootrunner scripts into place" "$?"
+
+    # Enable get_wpa service
     ln -s \
 	/usr/lib/systemd/system/get_wpa.service \
 	root/etc/systemd/system/multi-user.target.wants/get_wpa.service
     catch_error "enabling the get_wpa service" "$?"
+
+    # Enable bootrunner service
+    ln -s \
+	/usr/lib/systemd/system/bootrunner.service \
+	root/etc/systemd/system/multi-user.target.wants/bootrunner.service
+    catch_error "enabling the bootrunner service" "$?"
 }
 
 cleanup(){
     echo -e "\n\n[o] Cleaning up"
-    umount boot root
+    umount root/etc/bootrunner.d boot root
     catch_error "unmounting the filesystems" "$?"
 
     rmdir boot root

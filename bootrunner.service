@@ -1,0 +1,10 @@
+[Unit]
+Description=BootRunner
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/bootrunner
+
+[Install]
+WantedBy=multi-user.target
