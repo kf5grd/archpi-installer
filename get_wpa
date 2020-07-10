@@ -1,17 +1,18 @@
 #!/bin/sh
-wpa_file="/boot/wpa_supplicant.conf"
-wlan0_file="/boot/wlan0.network"
+WPA_FILE="/boot/wpa_supplicant.conf"
+WLAN0_FILE="/boot/wlan0.network"
+WLAN0_DEST="/etc/systemd/network/wlan0.network"
 
-COPY_WPA_CONFIG() {
-    mv "$wpa_file" /etc/wpa_supplicant/wpa_supplicant-wlan0.conf
+copy_wpa_config() {
+    mv "$WPA_FILE" /etc/wpa_supplicant/wpa_supplicant-wlan0.conf
 }
 
-COPY_WLAN_CONFIG() {
-    mv "$wlan0_file" /etc/systemd/network/wlan0.network
+copy_wlan_config() {
+    mv "$WLAN0_FILE" "$WLAN0_DEST"
 }
 
-WRITE_DEFAULT_WLAN_CONFIG() {
-        cat << EOF > /etc/systemd/network/wlan0.network
+write_default_wlan_config() {
+        cat << EOF > "$WLAN0_DEST"
 [Match]
 Name=wlan0
 
@@ -20,18 +21,18 @@ DHCP=yes
 EOF
 }
 
-ENABLE_NETWORKING() {
+enable_networking() {
+    if [ -f "$WPA_FILE" ]; then
+	copy_wpa_config
+    fi
+
+    if [ -f "$WLAN0_FILE" ] && [ ! -f "$WLAN0_DEST" ]; then
+	copy_wlan_config
+    else
+	write_default_wlan_config
+    fi
+
     systemctl enable --now wpa_supplicant@wlan0.service
 }
 
-if [ -f "$wpa_file" ]; then
-    COPY_WPA_CONFIG
-fi
-
-if [ -f "$wlan0_file" ]; then
-    COPY_WLAN_CONFIG
-else
-    WRITE_DEFAULT_WLAN_CONFIG
-fi
-
-ENABLE_NETWORKING
+enable_networking
