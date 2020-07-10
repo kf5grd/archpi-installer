@@ -1,2 +1,4 @@
+*.img
+*~
 wlan0.network
 wpa_supplicant.conf
