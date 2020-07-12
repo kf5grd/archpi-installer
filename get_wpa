@@ -6,7 +6,7 @@ WLAN0_DEST="/etc/systemd/network/wlan0.network"
 
 copy_wpa_config() {
     echo "Moving ${WPA_FILE} to ${WPA_DEST}"
-    mv "${WPA_FILE}" "{WPA_DEST}"
+    mv "${WPA_FILE}" "${WPA_DEST}"
 }
 
 copy_wlan_config() {
