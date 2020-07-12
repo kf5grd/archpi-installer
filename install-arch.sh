@@ -28,6 +28,7 @@ catch_error(){
 
     if [[ "$STATUS" -ne 0 ]] ; then
 	echo "An error ocurred while $PROCESS. Exiting..."
+	cleanup
 	exit "$STATUS"
     fi
 }
@@ -120,22 +121,22 @@ install_scripts(){
     fi
 
     # If bootrunner.d exists, copy contents to /etc/bootrunner.d
-    if [ -d "$bootrunner_folder" ]
+    if [ -d "files/$bootrunner_folder" ]
     then
-	cp -r "$bootrunner_folder"/* "root/etc/$bootrunner_folder" && \
+	cp -r "files/$bootrunner_folder"/* "root/etc/$bootrunner_folder" && \
 	chmod "$bootrunner_perm" "root/etc/$bootrunner_folder/run"
 	catch_error "copying $bootrunner_folder to boot partition" "$?"
     fi
 
     # Copy get_wpa scripts into place
-    cp get_wpa.service root/usr/lib/systemd/system/get_wpa.service && \
-    cp get_wpa root/usr/bin/get_wpa && \
+    cp files/get_wpa.service root/usr/lib/systemd/system/get_wpa.service && \
+    cp files/get_wpa root/usr/bin/get_wpa && \
     chmod +x root/usr/bin/get_wpa
     catch_error "copying get_wpa scripts into place" "$?"
 
     # Copy bootrunner scripts into place
-    cp bootrunner.service root/usr/lib/systemd/system/bootrunner.service && \
-    cp bootrunner root/usr/bin/bootrunner && \
+    cp files/bootrunner.service root/usr/lib/systemd/system/bootrunner.service && \
+    cp files/bootrunner root/usr/bin/bootrunner && \
     chmod +x root/usr/bin/bootrunner
     catch_error "copying bootrunner scripts into place" "$?"
 
