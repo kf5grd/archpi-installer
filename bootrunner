@@ -27,6 +27,10 @@ run_bootscript() {
     done
 }
 
+echo "bootrunner waiting for system to finish booting..."
+systemctl is-system-running --wait
+echo "bootrunner done waiting -- system is finished booting"
+
 echo "=== bootscript.d $(date) ===" >> ${BOOTSCRIPT_LOG}
 run_bootscript
 if [ -f "${BOOTSCRIPT_FOLDER}"/reboot ]; then

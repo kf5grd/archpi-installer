@@ -2,7 +2,7 @@
 Description=Auto-setup WPA
 
 [Service]
-Type=oneshot
+Type=simple
 ExecStart=/usr/bin/get_wpa
 
 [Install]

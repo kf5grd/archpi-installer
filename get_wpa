@@ -25,6 +25,12 @@ DHCP=yes
 EOF
 }
 
+while [ "$(systemctl is-failed bootrunner.service)" != "inactive" ]; do
+    echo "get_wpa waiting for bootrunner to finish"
+    sleep 1
+done
+echo "get_wpa done waiting for bootrunner to finish"
+
 if [ -f "$WPA_FILE" ]; then
     copy_wpa_config
 fi
@@ -37,3 +43,5 @@ fi
 
 echo "Enabling wpa_supplicant@wlan0.service"
 systemctl enable --now wpa_supplicant@wlan0.service
+systemctl enable systemd-networkd.service
+systemctl restart systemd-networkd.service

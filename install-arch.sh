@@ -90,6 +90,7 @@ install_arch(){
     bsdtar -xpf "${ARCHFILE}" -C root && \
     mv root/boot/* boot && \
     echo -e "# <device>\t<dir>\t<type>\t<options>\t<dump>\t<fsck>" > root/etc/fstab && \
+    echo -e "/dev/mmcblk0p1\t/boot\tvfat\tdefaults\t0\t0" >> root/etc/fstab && \
     echo -e "/dev/mmcblk0p3\t/\text4\tdefaults\t0\t0" >> root/etc/fstab && \
     echo -e "/dev/mmcblk0p2\t/etc/bootrunner.d\text4\tdefaults\t0\t0" >> root/etc/fstab && \
     sed -i 's/mmcblk0p2/mmcblk0p3/g' boot/cmdline.txt && \
