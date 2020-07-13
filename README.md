@@ -52,13 +52,16 @@ Before creating a new image, place any scripts you'd like to run on first boot i
 
 If you've already created your image and written it to your SD card, you can either copy your scripts to `/etc/bootrunner.d/run/` on a running system, or you can mount the 2nd partition of the SD card on another system, and copy files into the `run` folder.
 
-Every time your Pi boots, the bootrunner service will run any scripts it finds at `/etc/bootrunner.d/run` and after each script it runs, it will move it to `/etc/bootrunner.d/done`. After all scripts in the folder have completed, if the file `/etc/bootrunner.d/reboot` exists, bootrunner will restart the system.
+Every time your Pi boots, the bootrunner service will run any scripts it finds at `/etc/bootrunner.d/run` (scripts are run sequentially in alphabetical order) and after each script it runs, it will move it to `/etc/bootrunner.d/done`. After all scripts in the folder have completed, if the file `/etc/bootrunner.d/reboot` exists, bootrunner will restart the system. The output of all scripts run by bootrunner can be found in bootrunner's log file at `/etc/bootrunner.d/bootrunner.log`.
 
 *Note: The bootrunner service will refuse to run any scripts if the `run` folder's permissions are not set to 700. This also means that you will need root access to read or write any scripts in that folder.*
 
 You will find some helpful scripts in the `run` folder by default:
 
-- **10-stop-resolved.sh** *Stops the systemd-resolved service on first boot, which can sometimes cause problems with a certain third-party 64bit image for the Raspberry Pi 4*
-- **90-expand-root.sh** *Expands the root partition to fill up the rest of the SD card*
+- **00-stop-resolved.sh** *Stops the systemd-resolved service on first boot, which seems to solve issues with resolving hostnames.*
+- **01-initialize-keyring.sh** *Runs the commands to initialize the keyring for Arch Linux Arm which is necessary in order to download packages.*
+- **90-expand-root.sh** *Expands the root partition to fill up the rest of the SD card -- This script also creates another script to run resize2fs on the next boot, and tells bootrunner to reboot the device.*
 
 To prevent any of these from running, you can move them from `files/bootrunner.d/run` to `files/bootrunner.d/done` before creating your image.
+
+It should be trivial to add scripts to do things like set up user accounts and copy your public ssh key into place so it's ready on first boot.
