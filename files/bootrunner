@@ -19,17 +19,16 @@ run_bootscript() {
     fi
 
     for FILE in "${RUN_FOLDER}"/*; do
-	echo "=== RUNNING ${FILE} ==="
+	echo "=== RUNNING ${FILE} ===" >> ${BOOTSCRIPT_LOG}
 	chmod +x "${FILE}"
-	"${FILE}" >> ${BOOTSCRIPT_LOG}
+	"${FILE}" &>> ${BOOTSCRIPT_LOG}
 	echo "=== ${FILE} EXIT: $? ===" >> ${BOOTSCRIPT_LOG}
 	mv "${FILE}" "${DONE_FOLDER}"
     done
 }
 
-echo "bootrunner waiting for system to finish booting..."
+# wait for system boot to finish
 systemctl is-system-running --wait
-echo "bootrunner done waiting -- system is finished booting"
 
 echo "=== bootscript.d $(date) ===" >> ${BOOTSCRIPT_LOG}
 run_bootscript
