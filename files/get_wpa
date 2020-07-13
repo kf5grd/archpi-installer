@@ -25,11 +25,8 @@ DHCP=yes
 EOF
 }
 
-while [ "$(systemctl is-failed bootrunner.service)" != "inactive" ]; do
-    echo "get_wpa waiting for bootrunner to finish"
-    sleep 1
-done
-echo "get_wpa done waiting for bootrunner to finish"
+# wait for system boot to finish
+systemctl is-system-running --wait
 
 if [ -f "$WPA_FILE" ]; then
     copy_wpa_config
